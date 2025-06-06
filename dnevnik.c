@@ -5,8 +5,36 @@
 #include "dnevnik.h"
 #include "vec.h"
 
+//ако неща не бачка въведи няква променлива за state на програмата
+
 void main_menu(){
-    printf("sssssssss");
+    printf("1.създай история");
+    printf("2.списък с истории");
+    printf("Натиснете q за затваряне на програмата");
+    char input;
+    input = getchar();
+    if (input == '1') {
+        create_story();
+    } else if (input == '2') {
+        list_stories();
+    } else if (input == 'q') {
+        exit(1);
+    } else {
+        printf("Грешна команда. Въведи я отново");
+    }
+}
+
+void search(){
+    char date[MAX_DATE_LEN];
+    printf("Въведете дата (YYYY-MM-DD): ");
+    scanf("%10s", date);
+    getchar(); // премахване на нов ред
+    if(date == 'q'){
+        list_stories();
+    }
+    //търсене по дата
+    //показване
+    //изчакване на команда или за назад или за четене
 }
 void create_story() {
     char title[MAX_DATE_LEN];
@@ -79,7 +107,8 @@ void list_stories(int per_page) {
         vec_push(&dati, temp[0]);
         vec_push(&zaglaviq, temp[1]);
     }
-
+    //сортиране на вектора с дати и заглавия
+    //главния вектор се заменя със сортираните данни
     for(int i = cur_page*10; i<per_page; i++){
         printf("%d.%s", i/(cur_page*10), v[i]);
         if(i == vec_size){
@@ -112,6 +141,8 @@ void list_stories(int per_page) {
     } else if (isdigit(input)) {
         int number = input - '0'; // Convert char to actual integer 0-9
         read_story(v[number+(cur_page*10)]);
+    } else if (input == 's') {
+        main_menu();
     } else {
         printf("Грешна команда. Въведи я отново");
     }
@@ -128,5 +159,16 @@ void read_story(const char* filename) {
         return;
     }
 
+    char story_buffer[MAX_STORY_LEN];
+
+    while(fgets(story_buffer, MAX_STORY_LEN, f)) {
+        printf("%s", story_buffer);
+    }
+
     fclose(f);
+}
+
+int main(){
+    main_menu();
+    return 0;
 }

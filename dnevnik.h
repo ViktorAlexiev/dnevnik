@@ -15,6 +15,7 @@ typedef struct {
 
 // Декларации на функциите
 void main_menu();      
+void search();      
 void create_story();             // Добавяне на нова история
 void list_stories(int per_page); // Показване на списък с истории
 void read_story(const char*);    // Показване на история от файл
