@@ -6,8 +6,7 @@
 #include "vec.h"
 
 //ако неща не бачка въведи няква променлива за state на програмата
-
-
+int last_match_count = 0;
 
 void release_mem(char** v, char** dati, char** zaglaviq){
     vector_free(&v);
@@ -31,22 +30,80 @@ void main_menu(char** v, char** dati, char** zaglaviq){
     }
 }
 
-void search(char** v, char** dati, char** zaglaviq){
-    char date[MAX_DATE_LEN];
+int* find_date_indexes(char** arr, int n, const char* target) {
+    int left = 0, right = n - 1, first = -1;
+
+    // Binary search to find the first occurrence of target
+    while (left <= right) {
+        int mid = (left + right) / 2;
+        int cmp = strcmp(arr[mid], target);
+        if (cmp == 0) {
+            first = mid;
+            right = mid - 1;  // continue searching left
+        } else if (cmp < 0) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    // Reset global match count
+    last_match_count = 0;
+
+    if (first == -1) {
+        return NULL;  // No match found
+    }
+
+    // Count how many elements match
+    int i = first;
+    while (i < n && strcmp(arr[i], target) == 0) {
+        last_match_count++;
+        i++;
+    }
+
+    int* indexes = malloc(last_match_count * sizeof(int));
+    if (!indexes) {
+        perror("Memory allocation failed");
+        exit(1);
+    }
+
+    for (int j = 0; j < last_match_count; j++) {
+        indexes[j] = first + j;
+    }
+
+    return indexes;
+}
+
+void search(char** v, char** dati, char** zaglaviq, int n){
+    char target_date[MAX_DATE_LEN];
     printf("Въведете дата (YYYY-MM-DD): ");
-    scanf("%10s", date);
+    scanf("%10s", target_date);
     getchar(); // премахване на нов ред
-    char input;
-    input = getchar();
-    if(date == 'q'){
+    if(strcmp(target_date, "q") == 0){
         list_stories(10, v, dati, zaglaviq);
-    } else if (input == 'q') {
+    } else if (strcmp(target_date, "m") == 0) {
         main_menu(v, dati, zaglaviq);
     }
-    //търсене по дата
-    //показване
-    //изчакване на команда или за назад или за четене
+
+    int* indexes = find_date_indexes(dati, n, target_date);
+    for(int i = 0; i<last_match_count; i++){
+        printf("%d.%s", i, v[indexes[i]]);
+    }
+
+    char input[100];
+    fgets(input, sizeof(input), stdin);
+    input[strcspn(input, "\n")] = 0;  // премахва newline
+
+    if (strcmp(input, "q") == 0) {
+        list_stories(10, v, dati, zaglaviq);
+    } else if (is_number(input)) {
+        int number = atoi(input);
+        read_story(v[indexes[number]], v, dati, zaglaviq);
+    } else {
+        printf("Невалиден вход. Опитайте отново.\n");
+    }
 }
+
 void create_story() {
     char title[MAX_DATE_LEN];
     char date[MAX_DATE_LEN];
@@ -176,16 +233,16 @@ void list_stories(int per_page, char** v, char** dati, char** zaglaviq) {
         main_menu(v, dati, zaglaviq);
     } else if (isdigit(input)) {
         int number = input - '0'; // Convert char to actual integer 0-9
-        read_story(v[number+(cur_page*10)]);
+        read_story(v[number+(cur_page*10)], v, dati, zaglaviq);
     } else if (input == 's') {
-        main_menu(v, dati, zaglaviq);
+        search(v, dati, zaglaviq, vec_size);
     } else {
         printf("Грешна команда. Въведи я отново");
     }
 
 }
 
-void read_story(const char* filename) {
+void read_story(const char* filename, char** v, char** dati, char** zaglaviq) {
     char path[MAX_FILENAME_LEN];
     snprintf(path, sizeof(path), "%s/%s", STORIES_DIR, filename);
 
@@ -202,6 +259,16 @@ void read_story(const char* filename) {
     }
 
     fclose(f);
+
+    char input;
+    input = getchar();
+    if (input == 'q') {
+        list_stories(10, v, dati, zaglaviq);
+    } else if (input == 'm') {
+        main_menu(v, dati, zaglaviq);
+    } else {
+        printf("Грешна команда. Въведи я отново");
+    }
 }
 
 int main(){
