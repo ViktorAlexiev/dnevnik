@@ -48,8 +48,8 @@ void search(char** v, char** dati, char** zaglaviq){
     //изчакване на команда или за назад или за четене
 }
 void create_story() {
-    char title[MAX_ENTRIES][MAX_DATE_LEN];
-    char date[MAX_ENTRIES][MAX_DATE_LEN];
+    char title[MAX_DATE_LEN];
+    char date[MAX_DATE_LEN];
     char story[MAX_STORY_LEN];
     
     printf("Въведете дата (YYYY-MM-DD): ");
@@ -58,7 +58,7 @@ void create_story() {
 
     printf("Въведете заглавие (до 30 символа): ");
     fgets(title, sizeof(title), stdin);
-    //title[strcspn(title, "\n")] = 0;  // премахване на newline
+    title[strcspn(title, "\n")] = 0;  // премахване на newline
 
     printf("Въведете историята (край с EOF - Ctrl+D):\n");
     fgets(story, sizeof(story), stdin);
@@ -120,7 +120,7 @@ void list_stories(int per_page, char** v, char** dati, char** zaglaviq) {
 
     char* temp = vector_create();
 
-    int vec_size = 0;
+    int vec_size = vector_size(v);
 
     for(int i = 0; i<vec_size; i++){
         // Extract the first token
