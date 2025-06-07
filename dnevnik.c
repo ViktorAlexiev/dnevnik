@@ -18,16 +18,18 @@ void main_menu(char** v, char** dati, char** zaglaviq){
     printf("2.списък с истории");
     printf("Натиснете q за затваряне на програмата");
     char input;
-    input = getchar();
-    if (input == '1') {
-        create_story();
-    } else if (input == '2') {
-        list_stories(10, v, dati, zaglaviq);
-    } else if (input == 'q') {
-        exit(1);
-    } else {
-        printf("Грешна команда. Въведи я отново");
-    }
+    do {
+        input = getchar();
+        if (input == '1') {
+            create_story(v, dati, zaglaviq);
+        } else if (input == '2') {
+            list_stories(10, v, dati, zaglaviq);
+        } else if (input == 'q') {
+            exit(1);
+        } else {
+            printf("Грешна команда. Въведи я отново");
+        }
+    }while(input!='1' || input!='2' || input!='q');
 }
 
 int* find_date_indexes(char** arr, int n, const char* target) {
@@ -91,20 +93,24 @@ void search(char** v, char** dati, char** zaglaviq, int n){
     }
 
     char input[100];
-    fgets(input, sizeof(input), stdin);
-    input[strcspn(input, "\n")] = 0;  // премахва newline
+    do{
+        fgets(input, sizeof(input), stdin);
+        input[strcspn(input, "\n")] = 0;  // премахва newline
 
-    if (strcmp(input, "q") == 0) {
-        list_stories(10, v, dati, zaglaviq);
-    } else if (is_number(input)) {
-        int number = atoi(input);
-        read_story(v[indexes[number]], v, dati, zaglaviq);
-    } else {
-        printf("Невалиден вход. Опитайте отново.\n");
-    }
+        if (strcmp(input, "q") == 0) {
+            list_stories(10, v, dati, zaglaviq);
+        }else if (strcmp(input, "m") == 0) {
+            main_menu(v, dati, zaglaviq);
+        } else if (is_number(input)) {
+            int number = atoi(input);
+            read_story(v[indexes[number]], v, dati, zaglaviq);
+        } else {
+            printf("Невалиден вход. Опитайте отново.\n");
+        }  
+    }while(strcmp(input, "q") == 1 || strcmp(input, "m") == 1);
 }
 
-void create_story() {
+void create_story(char** v, char** dati, char** zaglaviq) {
     char title[MAX_DATE_LEN];
     char date[MAX_DATE_LEN];
     char story[MAX_STORY_LEN];
@@ -134,6 +140,8 @@ void create_story() {
 
     fprintf(f, "%s\n%s\n%s\n", date, title, story);
     fclose(f);
+    printf("Историята е записана");
+    main_menu(v, dati, zaglaviq);
 }
 
 void insertion_sort(char** v, char** dati, char** zaglaviq, int n) {
@@ -210,35 +218,37 @@ void list_stories(int per_page, char** v, char** dati, char** zaglaviq) {
     }
 
     char input;
-    input = getchar();
-    if (input == 'z') {
-        if(cur_page>=0){
-            cur_page-=1;
+    do{
+        input = getchar();
+        if (input == 'z') {
+            if(cur_page>=0){
+                cur_page-=1;
+                for(int i = cur_page*10; i<per_page; i++){
+                    printf("%d.%s", i/(cur_page*10), v[i]);
+                    if(i == vec_size){
+                        break;
+                    }
+                }
+            }
+        } else if (input == 'x') {
+            cur_page+=1;
             for(int i = cur_page*10; i<per_page; i++){
                 printf("%d.%s", i/(cur_page*10), v[i]);
                 if(i == vec_size){
                     break;
                 }
             }
+        } else if (input == 'q') {
+            main_menu(v, dati, zaglaviq);
+        } else if (isdigit(input)) {
+            int number = input - '0'; // Convert char to actual integer 0-9
+            read_story(v[number+(cur_page*10)], v, dati, zaglaviq);
+        } else if (input == 's') {
+            search(v, dati, zaglaviq, vec_size);
+        } else {
+            printf("Грешна команда. Въведи я отново");
         }
-    } else if (input == 'x') {
-        cur_page+=1;
-        for(int i = cur_page*10; i<per_page; i++){
-            printf("%d.%s", i/(cur_page*10), v[i]);
-            if(i == vec_size){
-                break;
-            }
-        }
-    } else if (input == 'q') {
-        main_menu(v, dati, zaglaviq);
-    } else if (isdigit(input)) {
-        int number = input - '0'; // Convert char to actual integer 0-9
-        read_story(v[number+(cur_page*10)], v, dati, zaglaviq);
-    } else if (input == 's') {
-        search(v, dati, zaglaviq, vec_size);
-    } else {
-        printf("Грешна команда. Въведи я отново");
-    }
+    }while(input!='z' || input!='x' || input!= 'q' || input!='s');
 
 }
 
@@ -261,14 +271,16 @@ void read_story(const char* filename, char** v, char** dati, char** zaglaviq) {
     fclose(f);
 
     char input;
-    input = getchar();
-    if (input == 'q') {
-        list_stories(10, v, dati, zaglaviq);
-    } else if (input == 'm') {
-        main_menu(v, dati, zaglaviq);
-    } else {
-        printf("Грешна команда. Въведи я отново");
-    }
+    do{
+        input = getchar();
+        if (input == 'q') {
+            list_stories(10, v, dati, zaglaviq);
+        } else if (input == 'm') {
+            main_menu(v, dati, zaglaviq);
+        } else {
+            printf("Грешна команда. Въведи я отново");
+        }
+    }while(input!= 'q' || input!='m');
 }
 
 int main(){
