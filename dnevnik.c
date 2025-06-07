@@ -7,6 +7,15 @@
 
 //ако неща не бачка въведи няква променлива за state на програмата
 
+vec_str_t v;
+vec_str_t dati;
+vec_str_t zaglaviq;
+
+void release_mem(){
+    vec_deinit(&v);
+    vec_deinit(&dati);
+    vec_deinit(&zaglaviq);
+}
 void main_menu(){
     printf("1.създай история");
     printf("2.списък с истории");
@@ -31,14 +40,17 @@ void search(){
     getchar(); // премахване на нов ред
     if(date == 'q'){
         list_stories();
+    } else if (input == 'q') {
+        release_mem();
+        main_menu();
     }
     //търсене по дата
     //показване
     //изчакване на команда или за назад или за четене
 }
 void create_story() {
-    char title[MAX_DATE_LEN];
-    char date[MAX_DATE_LEN];
+    char title[][MAX_DATE_LEN];
+    char date[][MAX_DATE_LEN];
     char story[MAX_STORY_LEN];
     
     printf("Въведете дата (YYYY-MM-DD): ");
@@ -68,9 +80,28 @@ void create_story() {
     fclose(f);
 }
 
+void insertion_sort(vec_str_t dates, vec_str_t titles, int n) {
+    for (int i = 1; i < n; i++) {
+        char date_key[MAX_DATE_LEN];
+        char title_key[MAX_TITLE_LEN];
+
+        strcpy(date_key, dates[i]);
+        strcpy(title_key, titles[i]);
+
+        int j = i - 1;
+        while (j >= 0 && strcmp(arr[j], key) > 0) {
+            strcpy(arr[j + 1], arr[j]);
+            strcpy(arr2[j + 1], arr2[j]);
+            j--;
+        }
+        strcpy(dates[j + 1], date_key);
+        strcpy(titles[j + 1], title_key);
+    }
+}
+
 void list_stories(int per_page) {
     int cur_page = 0;
-    vec_str_t v;
+    
     vec_init(&v);
     struct dirent *de;
 
@@ -88,17 +119,17 @@ void list_stories(int per_page) {
 
     closedir(dr);
 
-    vec_str_t dati;
     vec_init(&dati);
-    vec_str_t zaglaviq;
     vec_init(&zaglaviq);
     vec_str_t temp;
     vec_init(&temp);
 
+    int vec_size = 0;
+
     for(int i = 0; i<vec_size; i++){
         // Extract the first token
         char * token = strtok(v[i], "_");
-        // loop through the string to extract all other tokens
+        vec_clear(&temp);
         while( token != NULL ) {
             printf( " %s\n", token ); //printing each token
             vec_push(&temp, token);
@@ -107,8 +138,17 @@ void list_stories(int per_page) {
         vec_push(&dati, temp[0]);
         vec_push(&zaglaviq, temp[1]);
     }
-    //сортиране на вектора с дати и заглавия
-    //главния вектор се заменя със сортираните данни
+
+    insertion_sort(dati, zaglaviq, vec_size);
+    vec_clear(&v);
+    for(int i = 0; i < vec_size; i++){
+        char result[45];
+        strcat(result, dati[i]);
+        strcat(result, '_');
+        strcat(result, zaglaviq[i]);
+        vec_push(&v, result);
+    }
+
     for(int i = cur_page*10; i<per_page; i++){
         printf("%d.%s", i/(cur_page*10), v[i]);
         if(i == vec_size){
