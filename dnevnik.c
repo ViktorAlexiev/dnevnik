@@ -7,16 +7,14 @@
 
 //ако неща не бачка въведи няква променлива за state на програмата
 
-vec_str_t v;
-vec_str_t dati;
-vec_str_t zaglaviq;
 
-void release_mem(){
-    vec_deinit(&v);
-    vec_deinit(&dati);
-    vec_deinit(&zaglaviq);
+
+void release_mem(char** v, char** dati, char** zaglaviq){
+    vector_free(&v);
+    vector_free(&dati);
+    vector_free(&zaglaviq);
 }
-void main_menu(){
+void main_menu(char** v, char** dati, char** zaglaviq){
     printf("1.създай история");
     printf("2.списък с истории");
     printf("Натиснете q за затваряне на програмата");
@@ -25,7 +23,7 @@ void main_menu(){
     if (input == '1') {
         create_story();
     } else if (input == '2') {
-        list_stories();
+        list_stories(10, v, dati, zaglaviq);
     } else if (input == 'q') {
         exit(1);
     } else {
@@ -33,24 +31,25 @@ void main_menu(){
     }
 }
 
-void search(){
+void search(char** v, char** dati, char** zaglaviq){
     char date[MAX_DATE_LEN];
     printf("Въведете дата (YYYY-MM-DD): ");
     scanf("%10s", date);
     getchar(); // премахване на нов ред
+    char input;
+    input = getchar();
     if(date == 'q'){
-        list_stories();
+        list_stories(10, v, dati, zaglaviq);
     } else if (input == 'q') {
-        release_mem();
-        main_menu();
+        main_menu(v, dati, zaglaviq);
     }
     //търсене по дата
     //показване
     //изчакване на команда или за назад или за четене
 }
 void create_story() {
-    char title[][MAX_DATE_LEN];
-    char date[][MAX_DATE_LEN];
+    char title[MAX_ENTRIES][MAX_DATE_LEN];
+    char date[MAX_ENTRIES][MAX_DATE_LEN];
     char story[MAX_STORY_LEN];
     
     printf("Въведете дата (YYYY-MM-DD): ");
@@ -59,7 +58,7 @@ void create_story() {
 
     printf("Въведете заглавие (до 30 символа): ");
     fgets(title, sizeof(title), stdin);
-    title[strcspn(title, "\n")] = 0;  // премахване на newline
+    //title[strcspn(title, "\n")] = 0;  // премахване на newline
 
     printf("Въведете историята (край с EOF - Ctrl+D):\n");
     fgets(story, sizeof(story), stdin);
@@ -80,29 +79,29 @@ void create_story() {
     fclose(f);
 }
 
-void insertion_sort(vec_str_t dates, vec_str_t titles, int n) {
+void insertion_sort(char** v, char** dati, char** zaglaviq, int n) {
     for (int i = 1; i < n; i++) {
         char date_key[MAX_DATE_LEN];
         char title_key[MAX_TITLE_LEN];
 
-        strcpy(date_key, dates[i]);
-        strcpy(title_key, titles[i]);
+        strcpy(date_key, dati[i]);
+        strcpy(title_key, zaglaviq[i]);
 
         int j = i - 1;
-        while (j >= 0 && strcmp(arr[j], key) > 0) {
-            strcpy(arr[j + 1], arr[j]);
-            strcpy(arr2[j + 1], arr2[j]);
+        while (j >= 0 && strcmp(dati[j], date_key) > 0) {
+            strcpy(dati[j + 1], dati[j]);
+            strcpy(zaglaviq[j + 1], zaglaviq[j]);
             j--;
         }
-        strcpy(dates[j + 1], date_key);
-        strcpy(titles[j + 1], title_key);
+        strcpy(dati[j + 1], date_key);
+        strcpy(zaglaviq[j + 1], title_key);
     }
 }
 
-void list_stories(int per_page) {
+void list_stories(int per_page, char** v, char** dati, char** zaglaviq) {
+    
     int cur_page = 0;
     
-    vec_init(&v);
     struct dirent *de;
 
     DIR *dr = opendir(STORIES_DIR);
@@ -115,38 +114,35 @@ void list_stories(int per_page) {
 
     while ((de = readdir(dr)) != NULL)
             printf("%s\n", de->d_name);
-            vec_push(&v, de->d_name);
+            vector_add(&v, de->d_name);
 
     closedir(dr);
 
-    vec_init(&dati);
-    vec_init(&zaglaviq);
-    vec_str_t temp;
-    vec_init(&temp);
+    char* temp = vector_create();
 
     int vec_size = 0;
 
     for(int i = 0; i<vec_size; i++){
         // Extract the first token
         char * token = strtok(v[i], "_");
-        vec_clear(&temp);
+        vector_free(&temp);
+        char* temp = vector_create();
         while( token != NULL ) {
             printf( " %s\n", token ); //printing each token
-            vec_push(&temp, token);
+            vector_add(&temp, token);
             token = strtok(NULL, "_");
         }
-        vec_push(&dati, temp[0]);
-        vec_push(&zaglaviq, temp[1]);
+        vector_add(&dati, temp[0]);
+        vector_add(&zaglaviq, temp[1]);
     }
 
-    insertion_sort(dati, zaglaviq, vec_size);
-    vec_clear(&v);
+    insertion_sort(v, dati, zaglaviq, vec_size);
     for(int i = 0; i < vec_size; i++){
         char result[45];
         strcat(result, dati[i]);
         strcat(result, '_');
         strcat(result, zaglaviq[i]);
-        vec_push(&v, result);
+        strcpy(v[i], result);
     }
 
     for(int i = cur_page*10; i<per_page; i++){
@@ -177,12 +173,12 @@ void list_stories(int per_page) {
             }
         }
     } else if (input == 'q') {
-        main_menu();
+        main_menu(v, dati, zaglaviq);
     } else if (isdigit(input)) {
         int number = input - '0'; // Convert char to actual integer 0-9
         read_story(v[number+(cur_page*10)]);
     } else if (input == 's') {
-        main_menu();
+        main_menu(v, dati, zaglaviq);
     } else {
         printf("Грешна команда. Въведи я отново");
     }
@@ -209,6 +205,11 @@ void read_story(const char* filename) {
 }
 
 int main(){
-    main_menu();
+    char** v = vector_create();
+    char** dati = vector_create();
+    char** zaglaviq = vector_create();
+    main_menu(v, dati, zaglaviq);
+
+    release_mem(&v, &dati, &zaglaviq);
     return 0;
 }
